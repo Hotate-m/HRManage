@@ -1,0 +1,50 @@
+# ------------------------
+# Python / Django ทั่วไป
+# ------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+
+# virtualenv (ไม่ต้องเอาขึ้น git)
+.venv/
+venv/
+ENV/
+env/
+
+# ------------------------
+# Django local stuff
+# ------------------------
+
+# ฐานข้อมูล SQLite (ให้ server/machine แต่ละที่ migrate เอง)
+db.sqlite3
+*.sqlite3
+
+# media ที่ user upload (เก็บที่ storage จริง ไม่เอาใน git)
+media/
+media_root/
+
+# static ที่ collectstatic แล้ว (build จาก source)
+static/
+static_root/
+
+# ถ้ามี folder สำหรับไฟล์ที่เก็บรวบรวม (เช่น build)
+build/
+dist/
+
+# ------------------------
+# Secrets / env
+# ------------------------
+.env
+.env.*
+*.env
+settings_local.py
+
+# ------------------------
+# IDE / Editor
+# ------------------------
+.vscode/
+.idea/
+*.swp
+.DS_Store
