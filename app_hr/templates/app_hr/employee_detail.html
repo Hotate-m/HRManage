@@ -1,0 +1,292 @@
+{% extends "app_hr/hr_base.html" %}
+{% load humanize %}
+
+{% block title %}โปรไฟล์พนักงาน {{ employee.code }}{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-person-badge-fill me-1"></i> Employee
+        </span>
+        <div class="page-title mb-0">
+          โปรไฟล์พนักงาน
+        </div>
+        <div class="page-subtitle">
+          รหัส {{ employee.code }} | {{ employee.first_name }} {{ employee.last_name }}
+          {% if employee.position %}
+            &mdash; {{ employee.position }}
+          {% endif %}
+          {% if employee.department %}
+            (แผนก {{ employee.department }})
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 align-items-start justify-content-md-end">
+
+        {# ฟอร์มเปลี่ยนสถานะพนักงาน #}
+        <form method="post" class="d-flex align-items-center gap-2">
+          {% csrf_token %}
+          <div class="input-group input-group-sm">
+            <label class="input-group-text bg-light">
+              สถานะ
+            </label>
+            <select name="status" class="form-select form-select-sm">
+              <option value="active" {% if employee.status == 'active' %}selected{% endif %}>
+                ทำงานอยู่
+              </option>
+              <option value="inactive" {% if employee.status == 'inactive' %}selected{% endif %}>
+                ออกแล้ว
+              </option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-check2"></i>
+            </button>
+          </div>
+        </form>
+
+        <a href="{% url 'app_hr:employee_edit' employee.pk %}"
+          class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-pencil-square me-1"></i> แก้ไขข้อมูล
+        </a>
+
+        <a href="{% url 'app_hr:employee_year_summary' employee.pk %}?year={{ year }}"
+          class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-graph-up-arrow me-1"></i> สรุปการเข้างานรายปี
+        </a>
+
+      </div>
+    </div>
+
+    {# แถวข้อมูลส่วนบุคคล + งาน + ธนาคาร #}
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="metric-card">
+          <div class="metric-label">ข้อมูลติดต่อ</div>
+          <div class="metric-sub">
+            <div><strong>ชื่อ - นามสกุล:</strong> {{ employee.first_name }} {{ employee.last_name }}</div>
+            <div><strong>รหัสพนักงาน:</strong> {{ employee.code }}</div>
+            <div><strong>เบอร์โทร:</strong> {{ employee.phone_number|default:"-" }}</div>
+            <div class="mt-1">
+              <strong>ที่อยู่:</strong><br>
+              <span class="text-muted">
+                {{ employee.address|default:"(ยังไม่ได้ระบุที่อยู่)" }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="metric-card">
+          <div class="metric-label">ข้อมูลการจ้างงาน / การจ่ายเงิน</div>
+          <div class="metric-sub">
+            <div><strong>ตำแหน่ง:</strong> {{ employee.position|default:"-" }}</div>
+            <div><strong>แผนก:</strong> {{ employee.department|default:"-" }}</div>
+            <div><strong>วันที่เริ่มงาน:</strong>
+              {% if employee.hire_date %}
+                {{ employee.hire_date }}
+              {% else %}
+                -
+              {% endif %}
+            </div>
+            <div class="mt-1">
+              <strong>ฐานเงินเดือน:</strong>
+              <span class="fw-semibold text-success">
+                {{ employee.base_salary|default:0|floatformat:2|intcomma }} บาท
+              </span>
+            </div>
+            <div class="mt-1">
+              <strong>ธนาคาร:</strong>
+              {{ employee.bank_name|default:"-" }}
+              {% if employee.bank_account_no %}
+                &mdash; เลขที่บัญชี {{ employee.bank_account_no }}
+              {% endif %}
+            </div>
+            <div>
+              <strong>เลขบัตรประชาชน:</strong> {{ employee.citizen_id|default:"-" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# แถบ tab ด้านล่าง #}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-payslip" data-bs-toggle="tab"
+                data-bs-target="#pane-payslip" type="button" role="tab">
+          <i class="bi bi-receipt me-1"></i> สลิปเงินเดือนล่าสุด
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-attendance" data-bs-toggle="tab"
+                data-bs-target="#pane-attendance" type="button" role="tab">
+          <i class="bi bi-calendar-check me-1"></i> การเข้างานปี {{ year }}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-leave" data-bs-toggle="tab"
+                data-bs-target="#pane-leave" type="button" role="tab">
+          <i class="bi bi-person-walking me-1"></i> การลา (ปี {{ year }})
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+
+      {# TAB 1: สลิปเงินเดือน #}
+      <div class="tab-pane fade show active" id="pane-payslip" role="tabpanel">
+        <div class="table-shell">
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>งวดเงินเดือน</th>
+                  <th class="text-end">รายรับรวม</th>
+                  <th class="text-end">รายหักรวม</th>
+                  <th class="text-end">รับสุทธิ</th>
+                  <th class="text-end">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in recent_payslips %}
+                  <tr>
+                    <td>
+                      {{ p.period.month }}/{{ p.period.year }}
+                    </td>
+                    <td class="text-end text-success">
+                      {{ p.gross_income|default:0|floatformat:2|intcomma }}
+                    </td>
+                    <td class="text-end text-danger">
+                      {{ p.total_deduction|default:0|floatformat:2|intcomma }}
+                    </td>
+                    <td class="text-end fw-semibold">
+                      {{ p.net_income|default:0|floatformat:2|intcomma }}
+                    </td>
+                    <td class="text-end">
+                      <a href="{% url 'app_hr:payslip_detail' p.pk %}"
+                         class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a href="{% url 'app_hr:payslip_pdf' p.pk %}"
+                         class="btn btn-sm btn-outline-primary ms-1">
+                        <i class="bi bi-filetype-pdf"></i>
+                      </a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-3">
+                      ยังไม่มีสลิปเงินเดือนของพนักงานคนนี้
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {# TAB 2: การเข้างานปีนี้ #}
+      <div class="tab-pane fade" id="pane-attendance" role="tabpanel">
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="metric-card">
+              <div class="metric-label">มาทำงาน</div>
+              <div class="metric-value text-success">
+                {{ status_counts.present|default:0|intcomma }}
+              </div>
+              <div class="metric-sub">status = present</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="metric-card">
+              <div class="metric-label">มาสาย</div>
+              <div class="metric-value text-warning">
+                {{ status_counts.late|default:0|intcomma }}
+              </div>
+              <div class="metric-sub">status = late</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="metric-card">
+              <div class="metric-label">ขาดงาน</div>
+              <div class="metric-value text-danger">
+                {{ status_counts.absent|default:0|intcomma }}
+              </div>
+              <div class="metric-sub">status = absent</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="metric-card">
+              <div class="metric-label">ลา</div>
+              <div class="metric-value text-info">
+                {{ status_counts.leave|default:0|intcomma }}
+              </div>
+              <div class="metric-sub">status = leave</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="metric-card">
+              <div class="metric-label">วันหยุด</div>
+              <div class="metric-value text-success">
+                {{ status_counts.holiday|default:0|intcomma }}
+              </div>
+              <div class="metric-sub">status = holiday</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="metric-card">
+              <div class="metric-label">รวมวันที่มีบันทึก</div>
+              <div class="metric-value">
+                {{ total_days|default:0|intcomma }}
+              </div>
+              <div class="metric-sub">ทุกสถานะในปี {{ year }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <a href="{% url 'app_hr:employee_year_summary' employee.pk %}?year={{ year }}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-right-circle me-1"></i>
+            ดูสรุปการเข้างานรายเดือนทั้งปี
+          </a>
+        </div>
+      </div>
+
+      {# TAB 3: การลา #}
+      <div class="tab-pane fade" id="pane-leave" role="tabpanel">
+        <div class="row g-3">
+          {% if leave_by_type %}
+            {% for type_name, days in leave_by_type.items %}
+              <div class="col-12 col-md-6 col-lg-4">
+                <div class="metric-card">
+                  <div class="metric-label">{{ type_name }}</div>
+                  <div class="metric-value">
+                    {{ days|floatformat:1 }} วัน
+                  </div>
+                  <div class="metric-sub">ปี {{ year }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="col-12">
+              <div class="alert alert-light border text-muted mb-0">
+                ยังไม่มีข้อมูลการลาของพนักงานคนนี้ในปี {{ year }}
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div> {# tab-content #}
+
+  </div>
+</div>
+{% endblock %}

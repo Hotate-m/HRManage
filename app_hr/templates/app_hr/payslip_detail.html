@@ -1,0 +1,227 @@
+{% extends 'app_hr/hr_base.html' %}
+{% load humanize %}
+
+{% block title %}รายละเอียดสลิปเงินเดือน{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-receipt me-1"></i> Payslip Detail
+        </span>
+        <div class="page-title mb-0">
+          สลิปเงินเดือน {{ payslip.employee.first_name }} {{ payslip.employee.last_name }}
+        </div>
+        <div class="page-subtitle">
+          งวด {{ payslip.period.month }}/{{ payslip.period.year }}
+          ({{ payslip.period.start_date }} – {{ payslip.period.end_date }})
+        </div>
+
+        <div class="mt-2 small">
+          <div>
+            รหัสพนักงาน: <strong>{{ payslip.employee.code }}</strong>
+          </div>
+          <div>
+            ตำแหน่ง: <strong>{{ payslip.employee.position|default:"-" }}</strong>
+            {% if payslip.employee.department %}
+              · แผนก: <strong>{{ payslip.employee.department }}</strong>
+            {% endif %}
+          </div>
+          {% if payslip.employee.hire_date %}
+            <div>
+              วันที่เริ่มงาน: <strong>{{ payslip.employee.hire_date }}</strong>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="text-end small">
+        <div>
+          ฐานเงินเดือน:
+          <strong>{{ payslip.employee.base_salary|default:0|floatformat:2|intcomma }}</strong>
+        </div>
+        {% if payslip.employee.phone_number %}
+          <div>
+            เบอร์โทร: <strong>{{ payslip.employee.phone_number }}</strong>
+          </div>
+        {% endif %}
+        {% if payslip.employee.citizen_id %}
+          <div>
+            เลขบัตรประชาชน:
+            <strong>{{ payslip.employee.citizen_id }}</strong>
+          </div>
+        {% endif %}
+        {% if payslip.employee.bank_name or payslip.employee.bank_account_no %}
+          <div class="mt-1">
+            บัญชีธนาคาร:
+            <strong>
+              {{ payslip.employee.bank_name|default:"" }}
+              {% if payslip.employee.bank_account_no %}
+                · {{ payslip.employee.bank_account_no }}
+              {% endif %}
+            </strong>
+          </div>
+        {% endif %}
+
+        <div class="mt-2">
+          <a href="{% url 'app_hr:payslip_pdf' payslip.pk %}" class="btn btn-sm btn-outline-secondary" target="_blank">
+            <i class="bi bi-file-earmark-pdf me-1"></i> พิมพ์ PDF
+          </a>
+          <a href="{% url 'app_hr:employee_edit' payslip.employee.pk %}"
+            class="btn btn-sm btn-outline-primary ms-1">
+            <i class="bi bi-person-badge me-1"></i> ข้อมูลพนักงาน
+          </a>
+        </div>
+      </div>
+    </div>
+
+
+    {# สรุปวันทำงาน / วันหักไม่จ่าย #}
+    <div class="alert alert-light border d-flex flex-wrap justify-content-between align-items-center small mb-3">
+      <div>
+        วันทำงานในงวดนี้: <strong>{{ working_day_count }}</strong> วัน
+        &nbsp;|&nbsp;
+        วันหักไม่จ่าย: <strong class="text-danger">{{ unpaid_days_count }}</strong> วัน
+      </div>
+      {% if unpaid_item %}
+        <div>
+          ยอดหักวันไม่จ่ายรวม:
+          <strong class="text-danger">-{{ unpaid_item.amount|floatformat:2|intcomma }}</strong>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">รายการรายได้</h2>
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>รายการ</th>
+                  <th class="text-number">ยอด</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in items %}
+                  {% if item.earning_type %}
+                    <tr>
+                      <td>{{ item.earning_type.name }}</td>
+                      <td class="text-number">{{ item.amount|floatformat:2|intcomma }}</td>
+                    </tr>
+                  {% endif %}
+                {% empty %}
+                  <tr>
+                    <td colspan="2" class="text-muted text-center">ไม่มีรายการรายได้</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th>รวมรายได้ (GROSS)</th>
+                  <th class="text-number">{{ payslip.gross_amount|floatformat:2|intcomma }}</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">รายการรายหัก</h2>
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>รายการ</th>
+                  <th class="text-number">ยอด</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in items %}
+                  {% if item.deduction_type %}
+                    <tr>
+                      <td>
+                        {{ item.deduction_type.name }}
+                        {% if item.deduction_type.code == 'UNPAID' and unpaid_days_count %}
+                          <span class="text-muted small">
+                            ({{ unpaid_days_count }} วัน)
+                          </span>
+                        {% endif %}
+                      </td>
+                      <td class="text-number text-danger">-{{ item.amount|floatformat:2|intcomma }}</td>
+                    </tr>
+                  {% endif %}
+                {% endfor %}
+                {% if payslip.deduction_amount == 0 %}
+                  <tr>
+                    <td colspan="2" class="text-muted text-center">ไม่มีรายการรายหัก</td>
+                  </tr>
+                {% endif %}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th>รวมรายหัก</th>
+                  <th class="text-number text-danger">-{{ payslip.deduction_amount|floatformat:2|intcomma }}</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="fw-semibold">
+              รับสุทธิ (NET)
+            </div>
+            <div class="fs-4 fw-bold text-success">
+              {{ payslip.net_amount|floatformat:2|intcomma }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# รายการวันหักไม่จ่ายทีละวัน #}
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h2 class="h6 mb-3">
+              รายละเอียดวันหักไม่จ่าย
+            </h2>
+            {% if unpaid_days_count %}
+              <table class="table table-sm mb-0">
+                <thead>
+                  <tr>
+                    <th>วันที่</th>
+                    <th>เหตุผล</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in unpaid_details %}
+                    <tr>
+                      <td>{{ row.date }}</td>
+                      <td>{{ row.reason }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <div class="text-muted small">
+                งวดนี้ไม่มีวันหักไม่จ่าย พนักงานได้รับค่าจ้างเต็มตามฐานเงินเดือน
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+{% endblock %}

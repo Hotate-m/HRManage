@@ -1,0 +1,126 @@
+{% extends 'app_hr/hr_base.html' %}
+
+{% block title %}ตั้งค่าเวลาเข้างาน & วันหยุด{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-gear me-1"></i> Attendance Settings
+        </span>
+        <div class="page-title mb-0">
+          ตั้งค่าเวลาเข้างาน & กฎการมาสาย
+        </div>
+        <div class="page-subtitle">
+          ใช้หน้านี้เพื่อกำหนดเวลาเริ่มงาน และกี่นาทีหลังจากนั้นที่ถือว่า “มาสาย” โดยระบบ Attendance จะอ้างอิงจากค่าตรงนี้
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-md-5">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body">
+            <h2 class="h6 mb-3">เวลาเข้างานปกติ</h2>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="update_settings" value="1">
+              <div class="mb-2">
+                <label class="form-label small">เวลาเริ่มงาน</label>
+                {{ settings_form.work_start_time }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">ถือว่าสายเมื่อเลย (นาที)</label>
+                {{ settings_form.late_after_minutes }}
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-save me-1"></i> บันทึกการตั้งค่า
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="card border-0 shadow-sm mb-3">
+          <div class="card-body">
+            <h2 class="h6 mb-3">เพิ่มวันหยุดใหม่</h2>
+            <form method="post" class="row g-2 align-items-end">
+              {% csrf_token %}
+              <input type="hidden" name="add_holiday" value="1">
+              <div class="col-sm-4">
+                <label class="form-label small">วันที่</label>
+                {{ holiday_form.date }}
+              </div>
+              <div class="col-sm-5">
+                <label class="form-label small">ชื่อวันหยุด</label>
+                {{ holiday_form.name }}
+              </div>
+              <div class="col-sm-2">
+                <div class="form-check mt-3 pt-1">
+                  {{ holiday_form.is_public_holiday }}
+                  <label class="form-check-label small">นักขัตฯ</label>
+                </div>
+              </div>
+              <div class="col-sm-1">
+                <button type="submit" class="btn btn-success btn-sm w-100">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="table-shell">
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>วันที่</th>
+                  <th>ชื่อวันหยุด</th>
+                  <th>ประเภท</th>
+                  <th class="text-end">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for h in holidays %}
+                  <tr>
+                    <td>{{ h.date }}</td>
+                    <td>{{ h.name }}</td>
+                    <td>
+                      {% if h.is_public_holiday %}
+                        <span class="badge text-bg-info-subtle text-info">นักขัตฤกษ์</span>
+                      {% else %}
+                        <span class="badge text-bg-secondary-subtle text-secondary">วันหยุดบริษัท</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <form method="post" style="display:inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="delete_holiday_id" value="{{ h.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('ต้องการลบวันหยุดนี้ใช่หรือไม่?');">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-3">
+                      ยังไม่ได้กำหนดวันหยุดใด ๆ
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

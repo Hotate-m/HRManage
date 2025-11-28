@@ -1,0 +1,92 @@
+{% extends "app_hr/hr_base.html" %}
+
+{% block title %}สิทธิ์ลดหย่อนภาษีพนักงาน{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-cash-coin me-1"></i> Tax Profile
+        </span>
+        <div class="page-title mb-0">
+          สิทธิ์ลดหย่อนภาษีพนักงาน
+        </div>
+        <div class="page-subtitle">
+          ข้อมูลนี้ใช้สำหรับคำนวณภาษีหัก ณ ที่จ่ายรายเดือนแบบจำลองทั้งปี
+        </div>
+      </div>
+
+      <form method="get" class="d-flex flex-row gap-2 align-items-end">
+        <div>
+          <label class="form-label small mb-1">เลือกพนักงาน</label>
+          <select name="emp" class="form-select form-select-sm" onchange="this.form.submit()">
+            {% for emp in employees %}
+              <option value="{{ emp.code }}"
+                      {% if employee and emp.code == employee.code %}selected{% endif %}>
+                {{ emp.code }} - {{ emp.first_name }} {{ emp.last_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+    </div>
+
+    {% if employee %}
+      <div class="mb-3 small text-muted">
+        กำลังแก้ไขโปรไฟล์ภาษีสำหรับ:
+        <strong>{{ employee.code }} - {{ employee.first_name }} {{ employee.last_name }}</strong>
+      </div>
+    {% endif %}
+
+    <form method="post" class="mt-2">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label small">สถานะสมรส</label>
+          <div class="form-check">
+            {{ form.is_married }}
+            <label class="form-check-label small">สมรส</label>
+          </div>
+          <div class="form-check mt-1">
+            {{ form.spouse_has_income }}
+            <label class="form-check-label small">คู่สมรสมีรายได้</label>
+          </div>
+          <div class="mt-3">
+            <label class="form-label small">จำนวนบุตรที่ใช้สิทธิ์</label>
+            {{ form.children_count }}
+          </div>
+        </div>
+
+        <div class="col-md-8">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small">เบี้ยประกันชีวิต/สุขภาพ (ต่อปี)</label>
+              {{ form.insurance_deduction }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small">กองทุนสำรองเลี้ยงชีพ/กองทุนรวม (ต่อปี)</label>
+              {{ form.provident_fund }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small">ดอกเบี้ยกู้ซื้อบ้าน (ต่อปี)</label>
+              {{ form.home_loan_interest }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small">ค่าลดหย่อนอื่น ๆ (ต่อปี)</label>
+              {{ form.other_deduction }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-save me-1"></i> บันทึกโปรไฟล์ภาษี
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'app_hr/hr_base.html' %}
+{% load humanize %}
+
+{% block title %}นำเข้าพนักงาน (CSV){% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-people me-1"></i> Employees
+        </span>
+        <div class="page-title mb-0">
+          นำเข้าพนักงานจากไฟล์ CSV
+        </div>
+        <div class="page-subtitle">
+          อัปโหลดรายชื่อพนักงานทีละหลาย ๆ คน โดยใช้ไฟล์ CSV ที่มีหัวคอลัมน์ตามตัวอย่างด้านล่าง
+        </div>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="mb-3">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">ไฟล์ CSV</label>
+        <input type="file" name="file" accept=".csv" class="form-control" required>
+        <div class="form-text">
+          รองรับไฟล์จาก Excel → บันทึกเป็น <strong>CSV (UTF-8)</strong>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-sm">
+        <i class="bi bi-upload me-1"></i> อัปโหลดและนำเข้า
+      </button>
+    </form>
+
+    <hr class="my-3">
+
+    <div class="mb-3">
+      <div class="fw-semibold mb-1">รูปแบบหัวคอลัมน์ที่รองรับ</div>
+      <div class="small text-muted mb-1">ต้องมีอย่างน้อย: <code>code, first_name, last_name</code></div>
+      <pre class="small bg-light p-2 rounded-3 mb-0" style="white-space:pre-wrap;">
+code,first_name,last_name,position,department,phone_number,address,citizen_id,bank_name,bank_account_no,base_salary,status,hire_date
+E001,สมชาย,ใจดี,Programmer,IT,0812345678,"123/45 ถนนสุขุมวิท กรุงเทพฯ",1234567890123,SCB,123-4-56789-0,35000,active,2024-01-15
+E002,สุดา,เก่งมาก,HR Manager,HR,0899999999,"99/9 หมู่บ้าน...",9876543210987,KBANK,999-9-99999-9,45000,active,2023-11-01
+      </pre>
+    </div>
+
+    {% if created or updated %}
+      <div class="mt-3 small">
+        <div>ผลการนำเข้า:</div>
+        <ul class="mb-0">
+          <li>เพิ่มพนักงานใหม่: <strong>{{ created|default:0|intcomma }}</strong> คน</li>
+          <li>อัปเดตพนักงานเดิม: <strong>{{ updated|default:0|intcomma }}</strong> คน</li>
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if errors %}
+      <hr>
+      <div class="alert alert-warning small" style="border-radius:12px;">
+        <div class="fw-semibold mb-1">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          พบปัญหาบางแถว ({{ errors|length }} แถว)
+        </div>
+        <ul class="mb-0">
+          {% for e in errors %}
+            <li>{{ e }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

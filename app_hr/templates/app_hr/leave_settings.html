@@ -1,0 +1,106 @@
+{% extends 'app_hr/hr_base.html' %}
+
+{% block title %}ตั้งค่าประเภทการลา{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-sliders me-1"></i> Leave Settings
+        </span>
+        <div class="page-title mb-0">
+          ตั้งค่าประเภทการลา
+        </div>
+        <div class="page-subtitle">
+          กำหนดประเภทลา เช่น ลาป่วย / ลากิจ / ลาพักร้อน และสิทธิ์จำนวนวันลาต่อปีของแต่ละประเภท
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">เพิ่มประเภทการลา</h2>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="add_type" value="1">
+              <div class="mb-2">
+                <label class="form-label small">รหัส (เช่น SICK, PERSONAL)</label>
+                {{ form.code }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">ชื่อประเภทลา</label>
+                {{ form.name }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">สิทธิ์วันลาต่อปี</label>
+                {{ form.max_days_per_year }}
+              </div>
+              <div class="mb-3 form-check">
+                {{ form.is_paid }}
+                <label class="form-check-label small">ลาพร้อมเงินเดือน</label>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> เพิ่มประเภทลา
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="table-shell">
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>รหัส</th>
+                  <th>ชื่อ</th>
+                  <th class="text-end">สิทธิ์/ปี</th>
+                  <th>สถานะเงินเดือน</th>
+                  <th class="text-end">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for lt in leave_types %}
+                  <tr>
+                    <td>{{ lt.code }}</td>
+                    <td>{{ lt.name }}</td>
+                    <td class="text-number">{{ lt.max_days_per_year }}</td>
+                    <td>
+                      {% if lt.is_paid %}
+                        <span class="badge text-bg-success-subtle text-success">ลาพร้อมเงินเดือน</span>
+                      {% else %}
+                        <span class="badge text-bg-secondary-subtle text-secondary">ลาไม่รับเงิน</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <form method="post" style="display:inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="delete_type_id" value="{{ lt.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('ต้องการลบประเภทการลานี้ใช่หรือไม่?');">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-3">
+                      ยังไม่ได้กำหนดประเภทการลา
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

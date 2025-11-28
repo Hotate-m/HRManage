@@ -1,0 +1,76 @@
+{% extends 'app_hr/hr_base.html' %}
+{% load humanize %}
+
+{% block title %}สร้างสลิปเงินเดือน{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-calculator me-1"></i> Payroll Run
+        </span>
+        <div class="page-title mb-0">
+          สร้างสลิปเงินเดือนจากฐานเงินเดือนพนักงาน
+        </div>
+        <div class="page-subtitle">
+          เลือกงวดเงินเดือน แล้วให้ระบบสร้างสลิปเงินเดือนให้พนักงานทุกคนจาก <strong>base salary</strong> โดยอัตโนมัติ
+        </div>
+      </div>
+      <div class="text-muted small">
+        ใช้ข้อมูลจาก <strong>Employee.base_salary</strong><br>
+        เฉพาะพนักงานที่สถานะ <strong>active</strong> เท่านั้น
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">เลือกงวดเงินเดือน</h2>
+            <form method="post">
+              {% csrf_token %}
+              <div class="mb-3">
+                {{ form.period.label_tag }}
+                {{ form.period }}
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm"
+                      onclick="return confirm('ต้องการสร้าง/อัปเดตสลิปเงินเดือนสำหรับงวดนี้หรือไม่?');">
+                <i class="bi bi-play-fill me-1"></i> สร้างสลิปเงินเดือน
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">ผลการประมวลผล</h2>
+
+            {% if result %}
+              <ul class="list-unstyled small mb-3">
+                <li>งวดเงินเดือน: <strong>{{ result.period.month }}/{{ result.period.year }}</strong></li>
+                <li>จำนวนพนักงานทั้งหมด: <strong>{{ result.employee_count }}</strong> คน</li>
+                <li>สร้างสลิปใหม่: <strong class="text-success">{{ result.created }}</strong></li>
+                <li>อัปเดตสลิปเดิม: <strong class="text-primary">{{ result.updated }}</strong></li>
+                <li>ข้าม (ไม่มี base_salary): <strong class="text-muted">{{ result.skipped }}</strong></li>
+              </ul>
+              <div class="alert alert-info small mb-0">
+                ถ้าต้องการเพิ่มรายการรายได้/รายหักอื่น ๆ ต่อพนักงาน (เช่น OT, เบี้ยเลี้ยง, หักอื่น ๆ)  
+                สามารถต่อยอดทำหน้าแก้ไขรายละเอียดสลิป หรือชั่วคราวใช้ Django admin ที่เมนู <strong>Payslips</strong> ได้
+              </div>
+            {% else %}
+              <div class="text-muted small">
+                เลือกงวดเงินเดือนแล้วกดปุ่ม <strong>สร้างสลิปเงินเดือน</strong> เพื่อให้ระบบสร้างสลิปให้พนักงานทุกคน
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

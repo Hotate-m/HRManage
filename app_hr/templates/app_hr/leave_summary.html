@@ -1,0 +1,73 @@
+{% extends 'app_hr/hr_base.html' %}
+
+{% block title %}สรุปสิทธิ์การลา{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-list-check me-1"></i> Leave Summary
+        </span>
+        <div class="page-title mb-0">
+          สรุปการใช้สิทธิ์การลา ตามปีและประเภทลา
+        </div>
+        <div class="page-subtitle">
+          ดูได้ว่าแต่ละคนใช้สิทธิ์ <strong>ลาป่วย / ลากิจ / พักร้อน</strong> ไปเท่าไหร่แล้ว เทียบกับสิทธิ์ทั้งหมดต่อปี
+        </div>
+      </div>
+      <form method="get" class="d-flex flex-row flex-wrap gap-2 align-items-center">
+        <label class="form-label mb-0 small">ปี:</label>
+        <select name="year" class="form-select form-select-sm">
+          {% for y in year_choices %}
+            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-sm btn-outline-primary" type="submit">
+          <i class="bi bi-search me-1"></i> ดู
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="table-shell">
+  <div class="table-responsive">
+    <table class="table table-borderless mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>รหัส</th>
+          <th>ชื่อ-นามสกุล</th>
+          {% for lt in leave_types %}
+            <th class="text-number">{{ lt.name }}<br><span class="text-muted small">สิทธิ์ {{ lt.max_days_per_year }} วัน</span></th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for emp in employees %}
+            <tr>
+            <td>{{ emp.code }}</td>
+            <td>{{ emp.first_name }} {{ emp.last_name }}</td>
+            {% for lt in leave_types %}
+                {% with key=emp.id|stringformat:"s"|add:"_"|add:lt.id|stringformat:"s" %}
+                {% if usage_map.key %}
+                    <td class="text-number">{{ usage_map.key }}</td>
+                {% else %}
+                    <td class="text-number text-muted">0</td>
+                {% endif %}
+                {% endwith %}
+            {% endfor %}
+            </tr>
+        {% empty %}
+            <tr>
+            <td colspan="{{ 2|add:leave_types|length }}" class="text-center text-muted py-3">
+                ยังไม่มีข้อมูลพนักงาน
+            </td>
+            </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

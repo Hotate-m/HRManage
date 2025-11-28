@@ -1,0 +1,81 @@
+{% extends 'app_hr/hr_base.html' %}
+{% load humanize %}
+
+{% block title %}ฟอร์แมตระบบ HR{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div>
+        <span class="badge-pill pill-muted mb-1">
+          <i class="bi bi-shield-lock me-1"></i> System Tools (Superuser Only)
+        </span>
+        <div class="page-title mb-0">
+          ฟอร์แมตระบบ HR
+        </div>
+        <div class="page-subtitle">
+          ลบข้อมูลทุกอย่างของระบบ HR รวมถึงพนักงาน ทำให้ระบบเหมือนติดตั้งใหม่
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-danger small" role="alert" style="border-radius:12px;">
+      <div class="fw-semibold mb-1">
+        <i class="bi bi-exclamation-triangle me-1"></i>
+        คำเตือน: การล้างข้อมูลนี้ไม่สามารถย้อนกลับได้
+      </div>
+      <ul class="mb-0">
+        <li>จะลบ <strong>พนักงาน (Employee)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>สลิปเงินเดือน (Payslip + PayslipItem)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>บันทึกการเข้างาน (AttendanceRecord)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>บันทึกการลา (LeaveRecord)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>งวดเงินเดือน (PayrollPeriod)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>ประเภทรายได้ (EarningType)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>ประเภทรายหัก (DeductionType)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>วันหยุด (Holiday)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>ประเภทการลา (LeaveType)</strong> ทั้งหมด</li>
+        <li>จะลบ <strong>การตั้งค่าบริษัท (CompanySetting)</strong> ทั้งหมด</li>
+        <li><strong>จะเหลือเฉพาะ</strong> Django User / ข้อมูลนอกระบบ HR</li>
+      </ul>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-6">
+        <div class="border rounded-3 p-3 bg-light">
+          <div class="fw-semibold mb-1">สรุปจำนวนข้อมูลปัจจุบัน</div>
+          <ul class="small mb-0">
+            <li>พนักงาน: <strong>{{ stats.employee_count|default:0|intcomma }}</strong> คน</li>
+            <li>สลิปเงินเดือน: <strong>{{ stats.payslip_count|default:0|intcomma }}</strong> รายการ</li>
+            <li>รายการในสลิป (PayslipItem): <strong>{{ stats.payslip_item_count|default:0|intcomma }}</strong> รายการ</li>
+            <li>บันทึกการเข้างาน: <strong>{{ stats.attendance_count|default:0|intcomma }}</strong> รายการ</li>
+            <li>บันทึกการลา: <strong>{{ stats.leave_count|default:0|intcomma }}</strong> รายการ</li>
+            <li>งวดเงินเดือน: <strong>{{ stats.period_count|default:0|intcomma }}</strong> งวด</li>
+            <li>ประเภทรายได้: <strong>{{ stats.earning_type_count|default:0|intcomma }}</strong> ประเภท</li>
+            <li>ประเภทรายหัก: <strong>{{ stats.deduction_type_count|default:0|intcomma }}</strong> ประเภท</li>
+            <li>วันหยุด: <strong>{{ stats.holiday_count|default:0|intcomma }}</strong> วัน</li>
+            <li>ประเภทการลา: <strong>{{ stats.leave_type_count|default:0|intcomma }}</strong> ประเภท</li>
+            <li>การตั้งค่าบริษัท: <strong>{{ stats.company_setting_count|default:0|intcomma }}</strong> รายการ</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <form method="post"
+          onsubmit="return confirm('ยืนยันจะฟอร์แมตระบบ HR ทั้งหมดจริงหรือไม่? ข้อมูลจะถูกลบถาวรและไม่สามารถกู้คืนได้');">
+      {% csrf_token %}
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" value="yes" id="confirmReset" name="confirm" required>
+        <label class="form-check-label small text-danger" for="confirmReset">
+          ฉันเข้าใจและยืนยันว่าจะลบข้อมูลทั้งหมดตามที่ระบุไว้ข้างต้น
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-danger btn-sm">
+        <i class="bi bi-trash3 me-1"></i> ฟอร์แมตระบบ HR (ลบข้อมูลทั้งหมด)
+      </button>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'app_hr/hr_base.html' %}
+{% load humanize %}
+
+{% block title %}สลิปเงินเดือน{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center mb-3">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-receipt me-1"></i> Payslips
+        </span>
+        <div class="page-title mb-0">
+          รายการสลิปเงินเดือน
+        </div>
+        <div class="page-subtitle">
+          เลือกงวดเงินเดือน แล้วค้นหาพนักงานเพื่อดูรายละเอียดหรือพิมพ์สลิปเป็น PDF
+        </div>
+      </div>
+      <form method="get" class="d-flex flex-column flex-sm-row gap-2 align-items-sm-end">
+        <div>
+          <label class="form-label small mb-1">งวดเงินเดือน</label>
+          <select name="period" class="form-select form-select-sm">
+            <option value="">— ทั้งหมด —</option>
+            {% for p in periods %}
+              <option value="{{ p.id }}" {% if p.id|stringformat:"s" == selected_period_id|stringformat:"s" %}selected{% endif %}>
+                {{ p.month }}/{{ p.year }} ({{ p.start_date }} - {{ p.end_date }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label small mb-1">แผนก</label>
+          <select name="dept" class="form-select form-select-sm">
+            <option value="">— ทุกแผนก —</option>
+            {% for d in departments %}
+              <option value="{{ d }}" {% if d == selected_dept %}selected{% endif %}>
+                {{ d }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="form-label small mb-1">ค้นหา (ชื่อ/รหัส)</label>
+          <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="เช่น E001, สมชาย">
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-primary" type="submit">
+            <i class="bi bi-search me-1"></i> ค้นหา
+          </button>
+
+          {% if selected_period_id %}
+            <a class="btn btn-sm btn-outline-success"
+              href="{% url 'app_hr:payroll_export_csv' %}?period={{ selected_period_id }}{% if selected_dept %}&dept={{ selected_dept }}{% endif %}"
+              target="_blank">
+              <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV (สรุปทั่วไป)
+            </a>
+
+            <a class="btn btn-sm btn-outline-secondary"
+              href="{% url 'app_hr:payroll_export_bank' %}?period={{ selected_period_id }}{% if selected_dept %}&dept={{ selected_dept }}{% endif %}"
+              target="_blank">
+              <i class="bi bi-bank me-1"></i> ไฟล์จ่ายเงินเดือนธนาคาร
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+
+    <div class="table-shell">
+      <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>รหัส</th>
+              <th>ชื่อ-นามสกุล</th>
+              <th>งวด</th>
+              <th class="text-number">รายรับรวม</th>
+              <th class="text-number">รายหักรวม</th>
+              <th class="text-number">รับสุทธิ</th>
+              <th class="text-end">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payslips %}
+              <tr>
+                <td>{{ p.employee.code }}</td>
+                <td>{{ p.employee.first_name }} {{ p.employee.last_name }}</td>
+                <td>{{ p.period.month }}/{{ p.period.year }}</td>
+
+                <td class="text-end text-success">
+                  {{ p.gross_income|default:0|floatformat:2|intcomma }}
+                </td>
+                <td class="text-end text-danger">
+                  {{ p.total_deduction|default:0|floatformat:2|intcomma }}
+                </td>
+                <td class="text-end text-success fw-semibold">
+                  {{ p.net_income|default:0|floatformat:2|intcomma }}
+                </td>
+
+                <td class="text-end">
+                  <a class="btn btn-outline-secondary btn-sm"
+                    href="{% url 'app_hr:payslip_detail' p.id %}">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a class="btn btn-outline-secondary btn-sm"
+                    href="{% url 'app_hr:payslip_pdf' p.id %}">
+                    <i class="bi bi-filetype-pdf"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-muted py-3">
+                  ยังไม่มีสลิปเงินเดือนในเงื่อนไขที่เลือก
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

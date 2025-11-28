@@ -1,0 +1,94 @@
+{% extends 'app_hr/hr_base.html' %}
+
+{% block title %}สรุปการเข้างาน{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-calendar-check me-1"></i> Attendance Overview
+        </span>
+        <div class="page-title mb-0">
+          สรุปการเข้างานรายวัน
+        </div>
+        <div class="page-subtitle">
+          ดูสถานะการเข้างานของพนักงานทั้งหมดในวันเดียว ว่าใคร <strong>ปกติ / สาย / ลา / ขาด / วันหยุด</strong>
+        </div>
+      </div>
+      <form method="get" class="d-flex flex-row flex-wrap gap-2 align-items-center">
+        <label class="form-label mb-0 small">เลือกวันที่:</label>
+        <input type="date" name="date" class="form-control form-control-sm"
+               value="{{ target_date|date:'Y-m-d' }}">
+        <button class="btn btn-sm btn-outline-primary" type="submit">
+          <i class="bi bi-search me-1"></i> ดู
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="table-shell">
+  <div class="table-responsive">
+    <table class="table table-borderless mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>รหัส</th>
+          <th>ชื่อ-นามสกุล</th>
+          <th>สถานะ</th>
+          <th class="text-end">เวลาเข้า</th>
+          <th class="text-end">เวลาออก</th>
+          <th>หมายเหตุ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.employee.code }}</td>
+            <td>{{ row.employee.first_name }} {{ row.employee.last_name }}</td>
+            <td>
+              {% if row.status == 'present' %}
+                <span class="badge text-bg-success-subtle text-success">
+                  <i class="bi bi-check-circle me-1"></i> ปกติ
+                </span>
+              {% elif row.status == 'late' %}
+                <span class="badge text-bg-warning-subtle text-warning">
+                  <i class="bi bi-clock-history me-1"></i> สาย
+                </span>
+              {% elif row.status == 'leave' %}
+                <span class="badge text-bg-info-subtle text-info">
+                  <i class="bi bi-person-walking me-1"></i> ลา
+                </span>
+              {% elif row.status == 'holiday' %}
+                <span class="badge text-bg-secondary-subtle text-secondary">
+                  <i class="bi bi-sun me-1"></i> วันหยุด
+                </span>
+              {% else %}
+                <span class="badge text-bg-danger-subtle text-danger">
+                  <i class="bi bi-x-circle me-1"></i> ขาด
+                </span>
+              {% endif %}
+            </td>
+            <td class="text-number">
+              {% if row.check_in %}{{ row.check_in }}{% else %}-{% endif %}
+            </td>
+            <td class="text-number">
+              {% if row.check_out %}{{ row.check_out }}{% else %}-{% endif %}
+            </td>
+            <td class="small">
+              {{ row.remark|default:"" }}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3">
+              ยังไม่มีข้อมูลพนักงานสำหรับวันที่เลือก
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

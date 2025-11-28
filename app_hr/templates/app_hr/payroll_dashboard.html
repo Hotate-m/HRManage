@@ -1,0 +1,310 @@
+{% extends 'app_hr/hr_base.html' %}
+{% load humanize %}
+
+{% block title %}Payroll Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+  .period-label {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .period-highlight {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+  }
+
+  /* Metric cards */
+  .metric-card {
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    padding: 14px 14px 12px;
+    height: 100%;
+  }
+
+  .metric-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    font-feature-settings: "tnum" 1, "lnum" 1;
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  .metric-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background: #e0f2f1;
+    color: #0f766e;
+  }
+
+  .metric-card.alt {
+    background: #eff6ff;
+  }
+
+  .metric-card.danger {
+    background: #fef2f2;
+  }
+
+  .metric-card.success {
+    background: #ecfdf5;
+  }
+
+  .metric-card.success .metric-value {
+    color: #15803d;
+  }
+
+  .metric-card.danger .metric-value {
+    color: #b91c1c;
+  }
+
+  @media (max-width: 767.98px) {
+    .metric-value {
+      font-size: 18px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+  <!-- HEADER / HERO -->
+  <div class="card-soft mb-4">
+    <div class="card-soft-inner">
+      <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
+        <div>
+          <span class="badge-pill pill-success mb-2">
+            <i class="bi bi-graph-up-arrow me-1"></i> Payroll Overview
+          </span>
+          <div class="page-title">
+            ภาพรวมเงินเดือนพนักงาน
+          </div>
+          <div class="page-subtitle">
+            สรุปยอดรายจ่ายเงินเดือน ประกันสังคม และภาษีหัก ณ ที่จ่าย แยกตามงวดและแผนก
+          </div>
+        </div>
+
+        <div class="d-flex flex-column align-items-md-end gap-2">
+          <form method="get" class="d-flex flex-column flex-sm-row gap-2">
+            <div>
+              <label class="period-label mb-1">เลือกงวดเงินเดือน</label>
+              <select name="period" class="form-select form-select-sm">
+                {% for p in period_list %}
+                  <option value="{{ p.id }}" {% if period and p.id == period.id %}selected{% endif %}>
+                    {{ p.month }}/{{ p.year }} ({{ p.start_date }} - {{ p.end_date }})
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="d-flex align-items-end">
+              <button type="submit" class="btn btn-sm btn-primary px-3">
+                <i class="bi bi-arrow-repeat me-1"></i> ดูรายงาน
+              </button>
+            </div>
+          </form>
+
+          {% if period %}
+            <div class="text-sm-end">
+              <div class="period-label">งวดที่เลือก</div>
+              <div class="period-highlight">
+                {{ period.month }}/{{ period.year }}
+                <span class="badge-pill pill-muted ms-1">
+                  {{ period.start_date }} – {{ period.end_date }}
+                </span>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if not period %}
+    <div class="alert alert-info border-0 shadow-sm">
+      ยังไม่มีงวดเงินเดือนในระบบ กรุณาเพิ่มที่หน้า <strong>Payroll periods</strong> ใน Django admin ก่อน
+    </div>
+  {% else %}
+
+    <!-- METRICS ROW 1 -->
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="metric-label">จำนวนสลิป</div>
+              <div class="metric-value">
+                {{ summary.count_payslips|default:0|intcomma }}
+              </div>
+              <div class="metric-sub">ใบในงวดนี้</div>
+            </div>
+            <div class="metric-icon">
+              <i class="bi bi-people"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-3">
+        <div class="metric-card alt">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="metric-label">รายรับรวม (GROSS)</div>
+              <div class="metric-value">
+                {{ summary.total_gross|default:0|floatformat:2|intcomma }}
+              </div>
+              <div class="metric-sub">ก่อนหักทุกอย่าง</div>
+            </div>
+            <div class="metric-icon">
+              <i class="bi bi-cash-stack"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-3">
+        <div class="metric-card danger">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="metric-label">รายหักรวม</div>
+              <div class="metric-value">
+                -{{ summary.total_deduction|default:0|floatformat:2|intcomma }}
+              </div>
+              <div class="metric-sub">ภาษี + ประกันสังคม + รายหักอื่น</div>
+            </div>
+            <div class="metric-icon">
+              <i class="bi bi-dash-circle"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6 col-md-3">
+        <div class="metric-card success">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="metric-label">รับสุทธิรวม (NET)</div>
+              <div class="metric-value">
+                {{ summary.total_net|default:0|floatformat:2|intcomma }}
+              </div>
+              <div class="metric-sub">ยอดที่บริษัทจ่ายจริง</div>
+            </div>
+            <div class="metric-icon">
+              <i class="bi bi-piggy-bank"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS ROW 2 -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-6">
+        <div class="metric-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="metric-label">ประกันสังคมรวม</div>
+              <div class="metric-value">
+                {{ ssf_total|default:0|floatformat:2|intcomma }}
+              </div>
+              <div class="metric-sub">ส่วนที่หักจากพนักงานในงวดนี้</div>
+            </div>
+            <div class="metric-icon">
+              <i class="bi bi-shield-check"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <div class="metric-card">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="metric-label">ภาษีหัก ณ ที่จ่ายรวม</div>
+              <div class="metric-value">
+                {{ wht_total|default:0|floatformat:2|intcomma }}
+              </div>
+              <div class="metric-sub">ยอด WHT ทั้งหมดของงวดนี้</div>
+            </div>
+            <div class="metric-icon">
+              <i class="bi bi-receipt-cutoff"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEPARTMENT TABLE -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="h6 mb-0">
+        สรุปตามแผนก
+      </h2>
+      <span class="period-label">
+        งวด {{ period.month }}/{{ period.year }}
+      </span>
+    </div>
+
+    <div class="table-shell">
+      <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>แผนก</th>
+              <th class="text-end">จำนวนพนักงาน</th>
+              <th class="text-end">รายรับรวม</th>
+              <th class="text-end">รายหักรวม</th>
+              <th class="text-end">รับสุทธิรวม</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in dept_summary %}
+              <tr>
+                <td>
+                  {{ row.employee__department|default:"(ไม่ระบุแผนก)" }}
+                </td>
+                <td class="text-number">
+                  {{ row.emp_count|default:0|intcomma }}
+                </td>
+                <td class="text-number">
+                  {{ row.dept_gross|default:0|floatformat:2|intcomma }}
+                </td>
+                <td class="text-number text-danger">
+                  -{{ row.dept_deduction|default:0|floatformat:2|intcomma }}
+                </td>
+                <td class="text-number text-success">
+                  {{ row.dept_net|default:0|floatformat:2|intcomma }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-3">
+                  ยังไม่มีข้อมูลสลิปเงินเดือนสำหรับงวดนี้
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  {% endif %}
+
+{% endblock %}

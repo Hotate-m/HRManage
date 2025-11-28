@@ -1,0 +1,104 @@
+{% extends 'app_hr/hr_base.html' %}
+
+{% block title %}จัดการงวดเงินเดือน{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center mb-3">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-calendar-range me-1"></i> Payroll Periods
+        </span>
+        <div class="page-title mb-0">
+          จัดการงวดเงินเดือน
+        </div>
+        <div class="page-subtitle">
+          HR สามารถสร้างงวดเงินเดือนใหม่ หรือลบงวดเก่าที่ไม่ใช้แล้วได้จากหน้านี้ โดยไม่ต้องเข้า Django admin
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">สร้างงวดเงินเดือนใหม่</h2>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="add_period" value="1">
+              <div class="mb-2">
+                <label class="form-label small">ปี (เช่น 2025)</label>
+                {{ form.year }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">เดือน (1-12)</label>
+                {{ form.month }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">วันเริ่มงวด</label>
+                {{ form.start_date }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">วันสิ้นสุดงวด</label>
+                {{ form.end_date }}
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> เพิ่มงวดเงินเดือน
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="table-shell">
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>ปี/เดือน</th>
+                  <th>ช่วงวันที่</th>
+                  <th class="text-center">ใช้ในระบบ</th>
+                  <th class="text-end">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in periods %}
+                  <tr>
+                    <td>{{ p.year }}/{{ p.month }}</td>
+                    <td>{{ p.start_date }} – {{ p.end_date }}</td>
+                    <td class="text-center">
+                      <!-- ตรงนี้เอาไว้ future ถ้าอยากทำ flag locked หรือ active -->
+                      <span class="badge text-bg-success-subtle text-success">
+                        พร้อมใช้งาน
+                      </span>
+                    </td>
+                    <td class="text-end">
+                      <form method="post" style="display:inline-block;">
+                        {% csrf_token %}
+                        <input type="hidden" name="delete_period_id" value="{{ p.id }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('ลบงวดเงินเดือนนี้?\\nถ้ามีสลิปที่อ้างถึงงวดนี้อยู่ จะต้องตรวจสอบผลกระทบด้วย');">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-3">
+                      ยังไม่มีงวดเงินเดือนในระบบ
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

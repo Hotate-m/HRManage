@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}HR Portal{% endblock %}</title>
+
+  <!-- Google Font: Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --brand: #0f766e;
+      --brand-soft: #e0f2f1;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+      --border-soft: #e5e7eb;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: "Prompt", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .hr-navbar {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-soft);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .hr-navbar .navbar-brand {
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--brand);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hr-navbar .navbar-brand-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--brand-soft);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--brand);
+      font-size: 16px;
+    }
+
+    .hr-navbar .nav-link {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .hr-navbar .nav-link:hover {
+      color: var(--brand);
+    }
+
+    .page-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px 16px 32px;
+    }
+
+    @media (min-width: 768px) {
+      .page-shell {
+        padding-top: 24px;
+      }
+    }
+
+    .card-soft {
+      background: var(--card);
+      border-radius: 18px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    .card-soft-inner {
+      padding: 18px 18px 16px;
+    }
+
+    @media (min-width: 768px) {
+      .card-soft-inner {
+        padding: 20px 22px 18px;
+      }
+    }
+
+    .badge-pill {
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .pill-success {
+      background: #ecfdf5;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .pill-muted {
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+
+    .page-title {
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      font-size: clamp(18px, 2.4vw, 24px);
+      margin-bottom: 4px;
+      color: var(--text-main);
+    }
+
+    .page-subtitle {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .table-shell {
+      border-radius: 18px;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 8px 26px rgba(15, 23, 42, 0.04);
+    }
+
+    .table thead {
+      background: #f9fafb;
+    }
+
+    .table thead th {
+      border-bottom-color: var(--border-soft) !important;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .table tbody td {
+      border-color: #f3f4f6;
+      font-size: 13px;
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    .table tbody tr:hover td {
+      background: #f9fafb;
+    }
+
+    .text-number {
+      text-align: right;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+    }
+
+    .dropdown-menu {
+      font-size: 14px;
+    }
+  </style>
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg hr-navbar">
+  <div class="container-fluid" style="max-width:1180px;">
+    <a class="navbar-brand" href="{% url 'app_hr:payroll_dashboard' %}">
+      <span class="navbar-brand-icon">
+        <i class="bi bi-building"></i>
+      </span>
+      HRManage
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#hrNavbar" aria-controls="hrNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="hrNavbar">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+
+        <!-- กลุ่มเงินเดือน -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-cash-coin me-1"></i> เงินเดือน
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:payroll_dashboard' %}">
+                <i class="bi bi-speedometer2 me-1"></i> ภาพรวมเงินเดือน
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:payroll_periods' %}">
+                <i class="bi bi-calendar-range me-1"></i> งวดเงินเดือน
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:payroll_run' %}">
+                <i class="bi bi-calculator me-1"></i> สร้างสลิปเงินเดือน
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:payslip_list' %}">
+                <i class="bi bi-receipt me-1"></i> สลิปเงินเดือน
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.resolver_match.url_name == 'tax_profile' %}active{% endif %}"
+                href="{% url 'app_hr:tax_profile' %}">
+                <i class="bi bi-cash-coin me-1"></i> สิทธิ์ลดหย่อนภาษี
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- กลุ่มพนักงาน (ใหม่) -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-people me-1"></i> พนักงาน
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:employee_list' %}">
+                <i class="bi bi-card-list me-1"></i> รายการพนักงาน
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:employee_create' %}">
+                <i class="bi bi-person-plus me-1"></i> เพิ่มพนักงานใหม่
+              </a>
+            </li>
+            <!-- <li>
+              <a class="dropdown-item {% if request.resolver_match.url_name == 'employee_upload' %}active{% endif %}"
+                href="{% url 'app_hr:employee_upload' %}">
+                <i class="bi bi-people-fill me-1"></i> นำเข้าพนักงาน (CSV)
+              </a>
+            </li> -->
+          </ul>
+        </li>
+
+        <!-- กลุ่มการเข้างาน -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-calendar-check me-1"></i> การเข้างาน
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:attendance_daily' %}">
+                <i class="bi bi-list-ul me-1"></i> สรุปการเข้างาน
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.resolver_match.url_name == 'attendance_employee_month' %}active{% endif %}"
+                href="{% url 'app_hr:attendance_employee_month' %}">
+                <i class="bi bi-person-lines-fill me-1"></i> ประวัติการเข้างานรายคน
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item {% if request.resolver_match.url_name == 'attendance_employee_year' %}active{% endif %}"
+                href="{% url 'app_hr:attendance_employee_year' %}">
+                <i class="bi bi-calendar3-range me-1"></i> เข้างานรายคน (รายปี)
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:attendance_upload' %}">
+                <i class="bi bi-upload me-1"></i> นำเข้าการเข้างาน (CSV)
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:attendance_settings' %}">
+                <i class="bi bi-gear me-1"></i> ตั้งค่าเวลา/วันหยุด
+              </a>
+            </li>
+          </ul>
+        </li>
+
+        <!-- กลุ่มการลา -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-walking me-1"></i> การลา
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:leave_manage' %}">
+                <i class="bi bi-pencil-square me-1"></i> บันทึกการลา
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:leave_summary' %}">
+                <i class="bi bi-list-check me-1"></i> สรุปสิทธิ์ลา
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'app_hr:leave_settings' %}">
+                <i class="bi bi-sliders me-1"></i> ตั้งค่าประเภทลา
+              </a>
+            </li>
+          </ul>
+            {# ===== เมนูระบบ (เฉพาะ superuser) ===== #}
+            {% if request.user.is_superuser %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle {% if request.resolver_match.url_name == 'system_reset' %}active{% endif %}"
+                  href="#"
+                  id="navSystemAdminDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false">
+                  <i class="bi bi-shield-lock me-1"></i> ระบบ
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navSystemAdminDropdown">
+                  {% if request.user.is_authenticated %}
+                    <li>
+                      <a class="dropdown-item text-align" href="{% url 'app_hr:hr_logout' %}">
+                        <i class="bi bi-box-arrow-right me-1"></i> ออกจากระบบ
+                      </a>
+                    </li>
+                  {% endif %}
+                  <li>
+                    <a class="dropdown-item text-danger {% if request.resolver_match.url_name == 'system_reset' %}active{% endif %}"
+                      href="{% url 'app_hr:system_reset' %}">
+                      <i class="bi bi-trash3 me-1"></i> ล้างข้อมูลระบบ
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            {% endif %}
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="page-shell">
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

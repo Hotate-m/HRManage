@@ -1,0 +1,366 @@
+{% load humanize %}
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <title>Payslip {{ payslip.period.month }}/{{ payslip.period.year }}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+
+    /* บอก browser เวลา print ให้ใช้กระดาษ A4 */
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size:12px;
+      color:#111827;
+      background:#eee; /* ให้เห็นขอบ A4 ตอนดูบนหน้าจอ แต่เวลา print จะขาว */
+    }
+
+    .page{
+      width: 210mm;
+      min-height: 297mm;
+      padding: 18mm 18mm 20mm;
+      margin: 0 auto;
+      background:#fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ลายน้ำ CMSK จาง ๆ กลางหน้า A4 */
+    .page::before{
+      content:"CMSK";
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%, -50%) rotate(-30deg);
+      font-size:120px;
+      font-weight:700;
+      color:rgba(15, 23, 42, 0.06); /* จาง ๆ */
+      z-index:0;
+      pointer-events:none;
+      white-space:nowrap;
+    }
+
+    .content{
+      position:relative;
+      z-index:1; /* ให้เนื้อหาลอยอยู่เหนือ watermark */
+    }
+
+    h1,h2,h3{font-weight:600;}
+    .text-right{text-align:right;}
+    .text-center{text-align:center;}
+    .text-muted{color:#6b7280;}
+    .mt-1{margin-top:4px;}
+    .mt-2{margin-top:8px;}
+    .mt-3{margin-top:12px;}
+    .mt-4{margin-top:16px;}
+    .mb-1{margin-bottom:4px;}
+    .mb-2{margin-bottom:8px;}
+    .mb-3{margin-bottom:12px;}
+    .mb-4{margin-bottom:16px;}
+
+    .header-title{
+      font-size:16px;
+      font-weight:700;
+      text-align:center;
+      margin-bottom:4px;
+    }
+
+    /* แถวด้านล่างของชื่อบริษัท: ซ้าย = ป้ายใบแจ้งเงินเดือน, ขวา = งวด/ช่วงวันที่ */
+    .header-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      margin-bottom:10px;
+    }
+
+    .header-tag{
+      font-size:11px;
+      color:#4b5563;
+    }
+
+    .header-period{
+      font-size:11px;
+      text-align:right;
+    }
+
+    .box{
+      border:1px solid #111;
+      padding:6px 8px;
+      margin-bottom:6px;
+    }
+    .box-title{
+      font-weight:600;
+      font-size:11px;
+      margin-bottom:2px;
+    }
+    .row{
+      display:flex;
+      flex-wrap:nowrap;
+    }
+    .col{
+      flex:1;
+    }
+    .col-2{
+      flex:2;
+    }
+    .label{
+      font-size:11px;
+      color:#4b5563;
+    }
+    .value{
+      font-size:12px;
+      font-weight:500;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    th,td{
+      border:1px solid #111;
+      padding:4px 6px;
+      vertical-align:top;
+    }
+    th{
+      background:#f3f4f6;
+      font-weight:600;
+      font-size:11px;
+    }
+    .no-border{
+      border:none !important;
+    }
+    .summary-row{
+      font-weight:600;
+      background:#f9fafb;
+    }
+    .net-box{
+      border:1px solid #111;
+      padding:6px 8px;
+      margin-top:10px;
+      font-weight:700;
+    }
+    .net-label{
+      font-size:13px;
+    }
+    .net-value{
+      font-size:16px;
+      text-align:right;
+    }
+
+    @media print {
+      body{
+        background:#fff;
+      }
+      .page{
+        margin:0;
+        box-shadow:none;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="content">
+
+    {# HEADER บริษัท + งวด #}
+    <div class="mb-3">
+      <div class="header-title">
+        {{ company.company_name|default:"ใบแจ้งเงินเดือน" }}
+      </div>
+      <div class="header-row">
+        <div class="header-tag">
+          ใบแจ้งเงินเดือน
+        </div>
+        <div class="header-period">
+          งวด {{ payslip.period.month }}/{{ payslip.period.year }}
+          ({{ payslip.period.start_date }} – {{ payslip.period.end_date }})
+        </div>
+      </div>
+    </div>
+
+    {# ข้อมูลพนักงาน #}
+    <div class="box">
+      <div class="box-title">ข้อมูลพนักงาน</div>
+      <div class="row">
+        <div class="col-2">
+          <div class="label">ชื่อ-นามสกุล</div>
+          <div class="value">
+            {{ payslip.employee.first_name }} {{ payslip.employee.last_name }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="label">รหัสพนักงาน</div>
+          <div class="value">{{ payslip.employee.code }}</div>
+        </div>
+        <div class="col">
+          <div class="label">สถานะ</div>
+          <div class="value">{{ payslip.employee.get_status_display }}</div>
+        </div>
+      </div>
+
+      <div class="row mt-1">
+        <div class="col">
+          <div class="label">ตำแหน่ง</div>
+          <div class="value">{{ payslip.employee.position|default:"-" }}</div>
+        </div>
+        <div class="col">
+          <div class="label">แผนก</div>
+          <div class="value">{{ payslip.employee.department|default:"-" }}</div>
+        </div>
+        <div class="col">
+          <div class="label">วันที่เริ่มงาน</div>
+          <div class="value">
+            {% if payslip.employee.hire_date %}
+              {{ payslip.employee.hire_date }}
+            {% else %}
+              -
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-1">
+        <div class="col">
+          <div class="label">ที่อยู่ติดต่อ</div>
+          <div class="value">
+            {{ payslip.employee.address|default:"-" }}
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-1">
+        <div class="col">
+          <div class="label">เบอร์โทรศัพท์</div>
+          <div class="value">
+            {{ payslip.employee.phone_number|default:"-" }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="label">เลขบัตรประชาชน</div>
+          <div class="value">
+            {{ payslip.employee.citizen_id|default:"-" }}
+          </div>
+        </div>
+        <div class="col">
+          <div class="label">บัญชีธนาคาร (รับเงินเดือน)</div>
+          <div class="value">
+            {% if payslip.employee.bank_name or payslip.employee.bank_account_no %}
+              {{ payslip.employee.bank_name|default:"" }}
+              {% if payslip.employee.bank_account_no %}
+                · {{ payslip.employee.bank_account_no }}
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ฐานเงินเดือน #}
+    <div class="box">
+      <div class="row">
+        <div class="col">
+          <span class="label">ฐานเงินเดือน / เดือน</span><br>
+          <span class="value">
+            {{ payslip.employee.base_salary|default:0|floatformat:2|intcomma }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    {# ตารางรายได้ #}
+    <div class="mb-2">
+      <div class="box-title mb-1">รายการรายได้</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:70%;">รายละเอียด</th>
+            <th style="width:30%;" class="text-right">จำนวนเงิน</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in earning_items %}
+            <tr>
+              <td>{{ item.earning_type.name }}</td>
+              <td class="text-right">
+                {{ item.amount|floatformat:2|intcomma }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="2" class="text-center text-muted">ไม่มีรายการรายได้</td>
+            </tr>
+          {% endfor %}
+          <tr class="summary-row">
+            <td class="text-right">รวมรายได้ (GROSS)</td>
+            <td class="text-right">
+              {{ total_earn|floatformat:2|intcomma }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {# ตารางรายหัก #}
+    <div class="mb-2">
+      <div class="box-title mb-1">รายการรายหัก</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:70%;">รายละเอียด</th>
+            <th style="width:30%;" class="text-right">จำนวนเงิน</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in deduction_items %}
+            <tr>
+              <td>
+                {{ item.deduction_type.name }}
+                {% if unpaid_item and item.pk == unpaid_item.pk %}
+                  <span class="text-muted" style="font-size:10px;">
+                    (หักวันไม่จ่าย)
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-right">
+                -{{ item.amount|floatformat:2|intcomma }}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="2" class="text-center text-muted">ไม่มีรายการรายหัก</td>
+            </tr>
+          {% endfor %}
+          <tr class="summary-row">
+            <td class="text-right">รวมรายหัก</td>
+            <td class="text-right">
+              -{{ total_deduct|floatformat:2|intcomma }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {# NET #}
+    <div class="net-box">
+      <table class="no-border" style="width:100%;border:none;">
+        <tr class="no-border">
+          <td class="no-border net-label">รับสุทธิ (NET):</td>
+          <td class="no-border net-value">
+            {{ net_amount|floatformat:2|intcomma }}
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

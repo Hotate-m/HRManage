@@ -1,0 +1,181 @@
+{% extends "app_hr/hr_base.html" %}
+{% load humanize %}
+
+{% block title %}สรุปทั้งปี {{ employee.code }}{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+
+    <!-- HEADER -->
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-bar-chart-line me-1"></i> Year Summary
+        </span>
+        <div class="page-title mb-0">
+          สรุปทั้งปีของพนักงาน
+        </div>
+        <div class="page-subtitle">
+          {{ employee.code }} - {{ employee.first_name }} {{ employee.last_name }}
+        </div>
+      </div>
+      <div class="d-flex flex-row gap-2 align-items-end">
+        <a href="{% url 'app_hr:employee_edit' employee.pk %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i> กลับไปหน้าแก้ไขพนักงาน
+        </a>
+
+        <a href="{% url 'app_hr:employee_year_tax_pdf' employee.pk %}?year={{ year }}"
+          class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-filetype-pdf me-1"></i> ใบรับรองภาษี (PDF)
+        </a>
+      </div>
+    </div>
+
+    <!-- YEAR SELECTOR -->
+    <form method="get" class="row g-2 mb-3">
+      <div class="col-md-3">
+        <label class="form-label small mb-1">เลือกปี</label>
+        <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+          {% for y in year_choices %}
+            <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+
+    <!-- METRIC CARDS -->
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-label">รายรับรวมทั้งปี (GROSS)</div>
+          <div class="metric-value text-success">
+            {{ total_gross|default:0|floatformat:2|intcomma }}
+          </div>
+          <div class="metric-sub">รวมทุกเดือนในปี {{ year }}</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-label">รายหักรวมทั้งปี</div>
+          <div class="metric-value text-danger">
+            {{ total_deduct|default:0|floatformat:2|intcomma }}
+          </div>
+          <div class="metric-sub">ภาษี + ประกันสังคม + รายหักอื่น</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-label">รับสุทธิทั้งปี (NET)</div>
+          <div class="metric-value text-success">
+            {{ total_net|default:0|floatformat:2|intcomma }}
+          </div>
+          <div class="metric-sub">ยอดที่พนักงานได้รับจริง</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="metric-card">
+          <div class="metric-label">จำนวนงวดที่จ่าย</div>
+          <div class="metric-value">
+            {{ payslips|length|default:0|intcomma }}
+          </div>
+          <div class="metric-sub">งวดเงินเดือนในปี {{ year }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAX & SSF -->
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-6">
+        <div class="metric-card">
+          <div class="metric-label">ภาษีหัก ณ ที่จ่ายสะสม</div>
+          <div class="metric-value text-danger">
+            {{ wht_total|default:0|floatformat:2|intcomma }}
+          </div>
+          <div class="metric-sub">ยอด WHT ทั้งปี {{ year }}</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="metric-card">
+          <div class="metric-label">ประกันสังคมสะสม</div>
+          <div class="metric-value text-danger">
+            {{ ssf_total|default:0|floatformat:2|intcomma }}
+          </div>
+          <div class="metric-sub">หักจากเงินเดือนพนักงานทั้งปี</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLE: MONTHLY -->
+    <h6 class="mb-2">รายละเอียดรายเดือน</h6>
+    <div class="table-shell mb-4">
+      <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>งวด</th>
+              <th class="text-end">รายรับรวม</th>
+              <th class="text-end">รายหักรวม</th>
+              <th class="text-end">รับสุทธิ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in payslips %}
+              <tr>
+                <td>{{ p.period.month }}/{{ p.period.year }}</td>
+                <td class="text-end text-success">
+                  {{ p.gross_income|default:0|floatformat:2|intcomma }}
+                </td>
+                <td class="text-end text-danger">
+                  {{ p.total_deduction|default:0|floatformat:2|intcomma }}
+                </td>
+                <td class="text-end text-success">
+                  {{ p.net_income|default:0|floatformat:2|intcomma }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="text-center text-muted py-3">
+                  ยังไม่มีสลิปเงินเดือนในปี {{ year }} สำหรับพนักงานคนนี้
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TABLE: LEAVE SUMMARY -->
+    <h6 class="mb-2">สรุปวันลา (เฉพาะที่อนุมัติ) ปี {{ year }}</h6>
+    <div class="table-shell">
+      <div class="table-responsive">
+        <table class="table table-borderless mb-0 align-middle">
+          <thead>
+            <tr>
+              <th>ประเภทการลา</th>
+              <th class="text-end">จำนวนวัน</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in leave_summary %}
+              <tr>
+                <td>{{ row.leave_type__name }}</td>
+                <td class="text-end">
+                  {{ row.total_days|default:0|floatformat:2 }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="2" class="text-center text-muted py-3">
+                  ยังไม่มีการลาที่อนุมัติในปี {{ year }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

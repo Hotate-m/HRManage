@@ -1,0 +1,113 @@
+{% extends 'app_hr/hr_base.html' %}
+
+{% block title %}บันทึกการลา{% endblock %}
+
+{% block content %}
+<div class="card-soft mb-3">
+  <div class="card-soft-inner">
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+      <div>
+        <span class="badge-pill pill-success mb-1">
+          <i class="bi bi-person-walking me-1"></i> Leave Management
+        </span>
+        <div class="page-title mb-0">
+          บันทึกการลาของพนักงาน
+        </div>
+        <div class="page-subtitle">
+          HR สามารถลงข้อมูลการลาให้พนักงาน พร้อมกำหนดประเภทลาและสถานะ (อนุมัติ / รออนุมัติ / ไม่อนุมัติ)
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-md-5">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">เพิ่มรายการลาใหม่</h2>
+            <form method="post">
+              {% csrf_token %}
+              <div class="mb-2">
+                <label class="form-label small">พนักงาน</label>
+                {{ form.employee }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">ประเภทการลา</label>
+                {{ form.leave_type }}
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label small">วันที่เริ่ม</label>
+                  {{ form.start_date }}
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">วันที่สิ้นสุด</label>
+                  {{ form.end_date }}
+                </div>
+              </div>
+              <div class="mb-2 mt-2">
+                <label class="form-label small">จำนวนวันลา (เว้นว่างให้ระบบคำนวณเอง)</label>
+                {{ form.days }}
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">เหตุผล</label>
+                {{ form.reason }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">สถานะ</label>
+                {{ form.status }}
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-save me-1"></i> บันทึกการลา
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-7">
+        <div class="table-shell">
+          <div class="table-responsive">
+            <table class="table table-borderless mb-0 align-middle">
+              <thead>
+                <tr>
+                  <th>พนักงาน</th>
+                  <th>ประเภท</th>
+                  <th>ช่วงวันที่</th>
+                  <th class="text-number">วันลา</th>
+                  <th>สถานะ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for lr in recent_leaves %}
+                  <tr>
+                    <td>{{ lr.employee.code }} - {{ lr.employee.first_name }} {{ lr.employee.last_name }}</td>
+                    <td>{{ lr.leave_type.name }}</td>
+                    <td>{{ lr.start_date }} - {{ lr.end_date }}</td>
+                    <td class="text-number">{{ lr.days }}</td>
+                    <td>
+                      {% if lr.status == 'approved' %}
+                        <span class="badge text-bg-success-subtle text-success">อนุมัติ</span>
+                      {% elif lr.status == 'pending' %}
+                        <span class="badge text-bg-warning-subtle text-warning">รออนุมัติ</span>
+                      {% else %}
+                        <span class="badge text-bg-danger-subtle text-danger">ไม่อนุมัติ</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-3">
+                      ยังไม่มีข้อมูลการลา
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
